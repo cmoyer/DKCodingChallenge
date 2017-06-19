@@ -211,9 +211,48 @@ func searchContinuityAboveValueTwoSignals(data1: [Double], data2: [Double], inde
 
 // This function will return the startIndex and endIndex for ALL continuous samples where data is within the threshold range for at least winLength samples
 func searchMultiContinuityWithinRange(data: [Double], indexBegin: Int, indexEnd: Int, thresholdLo: Double, thresholdHi: Double, winLength: Int) -> [(begin: Int, end: Int)] {
-    var multiContRanges: [Int] = []
+    var multiContRanges: [(Int, Int)] = []
+    var winLengthCounter = 0
+    var startIndex = -1
+    var endIndex = -1
+    var prevValue: Double = Double()
     
-    return [(-1, -1)]
+    for index in indexBegin...indexEnd {
+        if startIndex == -1 {
+            if data[index] > thresholdLo && data[index] < thresholdHi {
+                startIndex = index
+                winLengthCounter += 1
+            }
+        } else {
+            if data[index] > thresholdLo && data[index] < thresholdHi && validateContinuous(pointA: prevValue, pointB: data[index]) {
+                winLengthCounter += 1
+            } else {
+                if winLengthCounter > winLength {
+                    endIndex = index - 1
+                    multiContRanges.append((startIndex, endIndex))
+                }
+                winLengthCounter = 0
+                startIndex = -1
+                endIndex = -1
+            }
+        }
+        
+        prevValue = data[index]
+    }
+    
+    // We need to do one final check to catch the case where we had a startIndex towards the end of the loop, but reached the endIndex before we pushed it to the array
+    // If that is the case, pushe the data to the array and then return the array of tuples, otherwise check to see if anything is in the array and make the necessary return
+    if startIndex > -1 && winLengthCounter > winLength {
+        endIndex = indexEnd
+        multiContRanges.append((startIndex, endIndex))
+        return multiContRanges
+    } else {
+        if multiContRanges.count > 0 {
+            return multiContRanges
+        } else {
+            return [(-1, -1)]
+        }
+    }
 }
 
 //MARK: Unit Tests
@@ -341,16 +380,36 @@ class MainFunctionTests: XCTestCase {
     func testSearchMultiContinuityWithinRange() {
         // I ran into some unexpected issues when attempting to use the XCTAssertEquals or XCTAssertTrue with our last function that returns an array of tuples. 
         // Therefore, I had to do some roundabout setup to get our test cases going.
-//        let testValue1 = searchMultiContinuityWithinRange(data: testData2, indexBegin: 0, indexEnd: testData2.count - 1, thresholdLo: 0.0, thresholdHi: 4.0, winLength: 5)
-//        print(testValue1[0].begin)
-//        print (testValue1[0].begin == 0)
-        //XCTAssertTrue(testValue1 == [(0,4), (7,28)])
+        let testValue1 = searchMultiContinuityWithinRange(data: testData2, indexBegin: 0, indexEnd: testData2.count - 1, thresholdLo: 0.0, thresholdHi: 4.0, winLength: 4)
+        let firstTuple = testValue1[0]
+        let firstBegin = firstTuple.begin
+        let firstEnd = firstTuple.end
+        
+        let secondTuple = testValue1[1]
+        let secondBegin = secondTuple.begin
+        let secondEnd = secondTuple.end
+        
+        XCTAssertTrue(firstBegin == 0)
+        XCTAssertTrue(firstEnd == 4)
+        XCTAssertTrue(secondBegin == 7)
+        XCTAssertTrue(secondEnd == 28)
+
+        // For this test, by increasing our winLength to 5, we should exclude the first tuple of values (0,4)
+        let testValue2 = searchMultiContinuityWithinRange(data: testData2, indexBegin: 0, indexEnd: testData2.count - 1, thresholdLo: 0.0, thresholdHi: 4.0, winLength: 5)
+        let test2Tuple = testValue2[0]
+        let begin = test2Tuple.begin
+        let end = test2Tuple.end
+        
+        XCTAssertTrue(begin == 7)
+        XCTAssertTrue(end == 28)
+
+        
     }
 }
 
 MainFunctionTests.defaultTestSuite().run()
 
-/*
+
 
 //MARK: Get data from csv file
 
@@ -387,4 +446,5 @@ if let url = Bundle.main.url(forResource: "latestSwing", withExtension: "csv") {
     }
 }
 
-*/
+//MARK: run our 4 functions against the data found in latestSwing.csv
+
