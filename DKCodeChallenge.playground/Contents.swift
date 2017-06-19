@@ -178,14 +178,42 @@ func searchContinuityAboveValueTwoSignals(data1: [Double], data2: [Double], inde
         return -1
     }
     
-    return 0
+    var winLengthCounter = 0
+    var startIndex = -1
+    var prevValue1: Double = Double()
+    var prevValue2: Double = Double()
+    
+    for index in indexBegin...indexEnd {
+        if startIndex == -1 {
+            if data1[index] > threshold1 && data2[index] > threshold2 {
+                startIndex = index
+                winLengthCounter += 1
+            }
+        } else {
+            if (data1[index] > threshold1 && validateContinuous(pointA: prevValue1, pointB: data1[index])) && (data2[index] > threshold2 && validateContinuous(pointA: prevValue2, pointB: data2[index])) {
+                winLengthCounter += 1
+            } else {
+                winLengthCounter = 0
+                startIndex = -1
+            }
+        }
+        
+        if winLengthCounter >= winLength {
+            return startIndex
+        }
+        
+        prevValue1 = data1[index]
+        prevValue2 = data2[index]
+    }
+    
+    return -1
 }
 
 // This function will return the startIndex and endIndex for ALL continuous samples where data is within the threshold range for at least winLength samples
 func searchMultiContinuityWithinRange(data: [Double], indexBegin: Int, indexEnd: Int, thresholdLo: Double, thresholdHi: Double, winLength: Int) -> [(begin: Int, end: Int)] {
     var multiContRanges: [Int] = []
     
-    return [(0, 0), (1, 1)]
+    return [(-1, -1)]
 }
 
 //MARK: Unit Tests
@@ -269,6 +297,8 @@ class ValidationTests: XCTestCase {
     
     func testValidateContinuousFailNegative(){
         XCTAssertEqual(validateContinuous(pointA: -15.567, pointB: -2.36), false)
+        XCTAssertEqual(validateContinuous(pointA: 2.2, pointB: 15.658), false)
+        XCTAssertEqual(validateContinuous(pointA: 15.658, pointB: 31.22), false)
     }
     
     func testValidateContinuousPassNegative() {
@@ -303,9 +333,9 @@ class MainFunctionTests: XCTestCase {
     }
     
     func testSearchContinuityAboveValueTwoSignals() {
-//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.3, winLength: 5), 3)
-//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 15), -1)
-//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 14), 11)
+        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.3, winLength: 5), 12)
+        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 15), -1)
+        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 14), 11)
     }
     
     func testSearchMultiContinuityWithinRange() {
