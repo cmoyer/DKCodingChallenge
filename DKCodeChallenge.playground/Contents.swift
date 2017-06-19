@@ -96,22 +96,28 @@ func searchContinuityAboveValue(data: [Double], indexBegin: Int, indexEnd: Int, 
     
     var winLengthCounter = 0
     var startIndex = -1
+    var prevValue: Double = Double() // We have to initialize the Double because we use in in a closure in the logic below
     
     for index in indexBegin...indexEnd {
-        if data[index] > threshold {
-            if startIndex == -1 {
+        if startIndex == -1 {
+            if data[index] > threshold {
                 startIndex = index
+                winLengthCounter += 1
             }
-            winLengthCounter += 1
         } else {
-            // this value isn't above the threshold, reset our tmp counter & starting index
-            winLengthCounter = 0
-            startIndex = -1
+            if data[index] > threshold && validateContinuous(pointA: prevValue, pointB: data[index]) {
+                winLengthCounter += 1
+            } else {
+                winLengthCounter = 0
+                startIndex = -1
+            }
         }
         
         if winLengthCounter >= winLength {
             return startIndex
         }
+        
+        prevValue = data[index]
     }
     // If we get to here, we didn't have data continuous for winLength samples, so return -1
     return -1
@@ -119,6 +125,13 @@ func searchContinuityAboveValue(data: [Double], indexBegin: Int, indexEnd: Int, 
 
 // This function will return the first index where data has values that are within the threshold range for at least winLength samples. 
 // In this function, indexBegin will be larger than indexEnd
+// NOTE: As I developed this function, I realized I had another question that I should have clarified. In the description of the function in the email from Mike, 
+// it says to return the first index where data has values that meet the criteria...etc. Does the first index refer to the first index as we are looping backwards 
+// through the array 'data' meaning it will be the last index, or would we want to return the "first" index meaning we should keep going past the winLength 
+// value to find the first index as if we were looping through in ascending order? For this coding challeng I have it set up to return the first index in the descending loop.
+// If we wanted to switch it to the first index as if we were looping through in ascending order, I would modify the method by removing the winLengthCounter > winLength check, 
+// and add conditions to check the counter is greater than winLength when we finally reach an index that either breaks continuity or no longer meets our threshold criteria, then 
+// I would return the current Index - 1 as that would be our last valid entry from the array, making it the 'first' index in the array.
 func backSearchContinuityWithinRange(data: [Double], indexBegin: Int, indexEnd: Int, thresholdLo: Double, thresholdHi: Double, winLength: Int) -> Int {
     if !validateBackIndexRange(indexBegin: indexBegin, indexEnd: indexEnd) {
         return -1
@@ -128,8 +141,33 @@ func backSearchContinuityWithinRange(data: [Double], indexBegin: Int, indexEnd: 
         return -1
     }
     
+    var winLengthCounter = 0
+    var startIndex = -1
+    var prevValue: Double = Double()
     
-    return 0
+    for index in (indexEnd...indexBegin).reversed() {
+        if startIndex == -1 {
+            if data[index] > thresholdLo && data[index] < thresholdHi {
+                startIndex = index
+                winLengthCounter += 1
+            }
+        } else {
+            if data[index] > thresholdLo && data[index] < thresholdHi && validateContinuous(pointA: prevValue, pointB: data[index]) {
+                winLengthCounter += 1
+            } else {
+                winLengthCounter = 0
+                startIndex = -1
+            }
+        }
+        
+        if winLengthCounter >= winLength {
+            return startIndex
+        }
+        
+        prevValue = data[index]
+    }
+    
+    return -1
 }
 
 // This function will return the first index where both data1 and data2 have values that are above threshold1 and threshold2 respectively, for at least winLength samples.
@@ -147,7 +185,7 @@ func searchContinuityAboveValueTwoSignals(data1: [Double], data2: [Double], inde
 func searchMultiContinuityWithinRange(data: [Double], indexBegin: Int, indexEnd: Int, thresholdLo: Double, thresholdHi: Double, winLength: Int) -> [(begin: Int, end: Int)] {
     var multiContRanges: [Int] = []
     
-    return [(0, 0)]
+    return [(0, 0), (1, 1)]
 }
 
 //MARK: Unit Tests
@@ -241,17 +279,46 @@ class ValidationTests: XCTestCase {
 ValidationTests.defaultTestSuite().run()
 
 class MainFunctionTests: XCTestCase {
-    
+    var testData1: [Double] = []
+    var testData2: [Double] = []
     override func setUp() {
         super.setUp()
+        testData1 = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 26.0, 35.0, 42.0, 113.0, -5.0] //29 so last is 28
+        testData2 = [1.0, 1.5, 1.02, 1.6845213, 2.2, 15.658, 31.22, 1.568, 1.0, 1.1, 1.2, 1.3, 1.4, 1.45, 1.6, 1.89, 1.95, 1.25, 2.24, 2.3, 2.8, 1.5, 2.2, 2.5, 2.5, 2.6524, 1.5, 1.2, 1.0]
     }
     
     override func tearDown() {
         super.tearDown()
     }
     
+    func testSearchContinuityAboveValue() {
+        XCTAssertEqual(searchContinuityAboveValue(data: testData1, indexBegin: 0, indexEnd: testData1.count - 1, threshold: 1.2, winLength: 5), 1)
+        XCTAssertEqual(searchContinuityAboveValue(data: testData1, indexBegin: 0, indexEnd: testData1.count - 1, threshold: 1.2, winLength: 25), -1)
+        XCTAssertEqual(searchContinuityAboveValue(data: testData2, indexBegin: 0, indexEnd: testData2.count - 1, threshold: 1.2, winLength: 10), 11)
+    }
     
+    func testBackSearchContinuityWithinRange() {
+        XCTAssertEqual(backSearchContinuityWithinRange(data: testData1, indexBegin: testData1.count - 1, indexEnd: 0, thresholdLo: 1.0, thresholdHi: 2.0, winLength: 5), -1)
+        XCTAssertEqual(backSearchContinuityWithinRange(data: testData2, indexBegin: testData2.count - 1, indexEnd: 0, thresholdLo: 1.0, thresholdHi: 2.0, winLength: 5), 17)
+    }
+    
+    func testSearchContinuityAboveValueTwoSignals() {
+//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.3, winLength: 5), 3)
+//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 15), -1)
+//        XCTAssertEqual(searchContinuityAboveValueTwoSignals(data1: testData1, data2: testData2, indexBegin: 0, indexEnd: testData1.count - 1, threshold1: 3.0, threshold2: 1.2, winLength: 14), 11)
+    }
+    
+    func testSearchMultiContinuityWithinRange() {
+        // I ran into some unexpected issues when attempting to use the XCTAssertEquals or XCTAssertTrue with our last function that returns an array of tuples. 
+        // Therefore, I had to do some roundabout setup to get our test cases going.
+//        let testValue1 = searchMultiContinuityWithinRange(data: testData2, indexBegin: 0, indexEnd: testData2.count - 1, thresholdLo: 0.0, thresholdHi: 4.0, winLength: 5)
+//        print(testValue1[0].begin)
+//        print (testValue1[0].begin == 0)
+        //XCTAssertTrue(testValue1 == [(0,4), (7,28)])
+    }
 }
+
+MainFunctionTests.defaultTestSuite().run()
 
 /*
 
