@@ -85,6 +85,8 @@ func validateContinuous(pointA: Double, pointB: Double) -> Bool {
     return !(pointA - pointB > 2 || pointA - pointB < -2)
 }
 
+//MARK: The 4 main functions in the coding challenge
+
 // This function will return the first index where data has values that are above the threshold value for at least winLength samples
 func searchContinuityAboveValue(data: [Double], indexBegin: Int, indexEnd: Int, threshold: Double, winLength: Int) -> Int {
     if !validateIndexRange(indexBegin: indexBegin, indexEnd: indexEnd) {
@@ -412,7 +414,6 @@ MainFunctionTests.defaultTestSuite().run()
 
 //MARK: Get data from csv file
 
-//var fullSwing: [SwingSample] = []
 var latestSwing: FullSwing?
 
 // Load the data from the provided csv file

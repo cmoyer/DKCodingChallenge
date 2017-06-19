@@ -3,6 +3,30 @@
 ## Running this code:
 In order to run this code, you will need to add the `latestSwing.csv` file to the Resources folder in the playground. This way the code will be able to extract all of the data into our data structure and run the functions against it. 
 
+## Code Organization
+I tried to break up this playground file into various sections and tag them with `//MARK:` as I would do in actual iOS projects. 
+
+### Data Model
+At the beginning of the file you will see the Data Model which is the model class that stores the information about a single swing. 
+
+### Custom Error Handling
+The next section was the start of custom error handling that I would implement in an actual application so that if one of our validations failed, we could return a nice, easy to understand error message rather than just returning -1.
+
+### Validation functions for the parameters
+This section includes functions that validate the parameters that were used when calling the functions. This ensures that we have non-negative values for our index parameters among other validations.
+
+### The 4 main functions
+This section is where you will find the 4 main functions for the coding challenge. 
+
+### Unit Tests
+This section contains two classes: `ValidationTests` and `MainFunctionTests`. These our the unit tests for all of our validation functions as well as the 4 main functions. 
+
+### Get data from csv file
+In this section, we look for a resource file named `latestSwing` with an extension of `.csv`. If we find the file, we loop through and gather all of the data and put it in our data structure `FullSwing`.
+
+### Run our 4 functions
+The last section is just an if let statement that unwraps the latestSwing variable and calls each of the 4 main functions with parameters related to data found in the .csv file.
+
 ## Data Structure Reasoning:
 I decided on using arrays as the main datastructure for the data based on a few things. Initially when I first read Mike's suggestion in the email about operating on this data in a sequential fashion, I immediately thought of using linked lists because it is very quick and easy to add additional elements to the end of the linked list (O(1)) compared to the speed of adding new elements to the end of the array (O(n)). Once I thought about what we were trying to gather with our four main functions (the starting index of continuity or start/end pairs of indices), I realized that an array would probably be better because it is quicker to access an array at an exact point (O(1)) compared to a linked list (O(n)). We only would need to store the information initially at the beginning, but we could run functions on the data multiple times so in terms of time complexity, I decided it would be better to go with an array. 
 
