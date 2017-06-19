@@ -460,7 +460,7 @@ if let url = Bundle.main.url(forResource: "latestSwing", withExtension: "csv") {
 if let swing = latestSwing {
     searchContinuityAboveValue(data: swing.ax, indexBegin: 0, indexEnd: swing.ax.count - 1, threshold: 2.0, winLength: 10)
     backSearchContinuityWithinRange(data: swing.wx, indexBegin: swing.wx.count - 1, indexEnd: 0, thresholdLo: -4.0, thresholdHi: 4.0, winLength: 20)
-    searchContinuityAboveValueTwoSignals(data1: swing.wx, data2: swing.wy, indexBegin: 0, indexEnd: swing.wx.count - 1, threshold1: 2.0, threshold2: 2.5, winLength: 10)
-    searchMultiContinuityWithinRange(data: swing.az, indexBegin: 0, indexEnd: 0, thresholdLo: 1.5, thresholdHi: 8.0, winLength: 10)
+    searchContinuityAboveValueTwoSignals(data1: swing.ay, data2: swing.wy, indexBegin: 0, indexEnd: swing.wx.count - 1, threshold1: 1.2, threshold2: 1.5, winLength: 10)
+    searchMultiContinuityWithinRange(data: swing.wy, indexBegin: 0, indexEnd: swing.wy.count - 1, thresholdLo: 1.5, thresholdHi: 8.0, winLength: 10)
 }
 
