@@ -9,17 +9,16 @@ import XCTest
 
 //MARK: Data Model
 
-public class SwingSample {
-    let timestamp: Int
-    let ax: Double
-    let ay: Double
-    let az: Double
-    let wx: Double
-    let wy: Double
-    let wz: Double
+public class FullSwing {
+    let timestamp: [Int]
+    let ax: [Double]
+    let ay: [Double]
+    let az: [Double]
+    let wx: [Double]
+    let wy: [Double]
+    let wz: [Double]
     
-    init(timestamp: Int, ax: Double, ay: Double, az: Double,
-         wx: Double, wy: Double, wz: Double) {
+    init(timestamp: [Int], ax: [Double], ay: [Double], az: [Double], wx: [Double], wy: [Double], wz: [Double]) {
         self.timestamp = timestamp
         self.ax = ax
         self.ay = ay
@@ -413,7 +412,8 @@ MainFunctionTests.defaultTestSuite().run()
 
 //MARK: Get data from csv file
 
-var fullSwing: [SwingSample] = []
+//var fullSwing: [SwingSample] = []
+var latestSwing: FullSwing?
 
 // Load the data from the provided csv file
 if let url = Bundle.main.url(forResource: "latestSwing", withExtension: "csv") {
@@ -423,28 +423,44 @@ if let url = Bundle.main.url(forResource: "latestSwing", withExtension: "csv") {
         // Separate the file data into an array of values with each index being a line from the file
         let dataComponents = fileData.components(separatedBy: "\r")
         
+        var tmpTimestamp: [Int] = []
+        var tmpAx: [Double] = []
+        var tmpAy: [Double] = []
+        var tmpAz: [Double] = []
+        var tmpWx: [Double] = []
+        var tmpWy: [Double] = []
+        var tmpWz: [Double] = []
+        
         for data in dataComponents {
             // Separate the line of data into its respective columns
             let columns = data.components(separatedBy: ",")
             
-            // Explicitly cast our column values to the respective data types
-            let timestamp = Int(columns[0].replacingOccurrences(of: "\n", with: ""))
-            let ax = Double(columns[1])
-            let ay = Double(columns[2])
-            let az = Double(columns[3])
-            let wx = Double(columns[4])
-            let wy = Double(columns[5])
-            let wz = Double(columns[6])
-            
-            // Use our data to create a SwingSample. The parameters are implicitly unwrapped for this challenge only because we know that all of the values in the csv file are integers our doubles. In normal conditions, we would unwrap them safely using if-let statements
-            let tmpSample = SwingSample.init(timestamp: timestamp!, ax: ax!, ay: ay!, az: az!, wx: wx!, wy: wy!, wz: wz!)
-            
-            fullSwing.append(tmpSample)
+            // The parameters are implicitly unwrapped for this challenge only because we know that all of the values in the csv file are integers or doubles. In normal conditions, we would unwrap them safely using if-let statements
+            tmpTimestamp.append(Int(columns[0].replacingOccurrences(of: "\n", with: ""))!)
+            tmpAx.append(Double(columns[1])!)
+            tmpAy.append(Double(columns[2])!)
+            tmpAz.append(Double(columns[3])!)
+            tmpWx.append(Double(columns[4])!)
+            tmpWy.append(Double(columns[5])!)
+            tmpWz.append(Double(columns[6])!)
         }
+        
+        latestSwing = FullSwing.init(timestamp: tmpTimestamp, ax: tmpAx, ay: tmpAy, az: tmpAz, wx: tmpWx, wy: tmpWy, wz: tmpWz)
+        
     } catch {
         print (error)
     }
+    
+    
 }
 
 //MARK: run our 4 functions against the data found in latestSwing.csv
+
+// safely unwrap our swing data
+if let swing = latestSwing {
+    searchContinuityAboveValue(data: swing.ax, indexBegin: 0, indexEnd: swing.ax.count - 1, threshold: 2.0, winLength: 10)
+    backSearchContinuityWithinRange(data: swing.wx, indexBegin: swing.wx.count - 1, indexEnd: 0, thresholdLo: -4.0, thresholdHi: 4.0, winLength: 20)
+    searchContinuityAboveValueTwoSignals(data1: swing.wx, data2: swing.wy, indexBegin: 0, indexEnd: swing.wx.count - 1, threshold1: 2.0, threshold2: 2.5, winLength: 10)
+    searchMultiContinuityWithinRange(data: swing.az, indexBegin: 0, indexEnd: 0, thresholdLo: 1.5, thresholdHi: 8.0, winLength: 10)
+}
 
